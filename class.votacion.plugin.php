@@ -25,16 +25,16 @@ $PluginInfo['Votacion'] = array(
    'AuthorUrl' => 'http://www.vanillaforums.com'
 );
 //Array de Configuración de puntos.
-$PuntosConfig=array(
+class VotacionPlugin extends Gdn_Plugin {
+
+private $PuntosConfig=array(
     'Puntosiniciales'=>10,//Puntos con los que inicia un usuario recien llegado.
-    'CostodePregunts'=>5,//Puntos que cuesta realizar una pregunta.
+    'CostodePregunta'=>5,//Puntos que cuesta realizar una pregunta.
     'PuntosporRespuesta'=>3,//Pts qu se gana por responder una pregunta.
     'PuntosporVoto'=>1,//Puntos ganados al dar un voto positivo.
     'PuntosPostNormal'=>1,//Puntos que se ganan al escribir un post normal.
     'PuntosComentNormal'=>1//puntos que se ganan al escribir un comentario a un post normal.
 );
-class VotacionPlugin extends Gdn_Plugin {
-
     /**
 	 *Herramimienta de Administracion del plugin voting.
 	 */
@@ -72,8 +72,8 @@ class VotacionPlugin extends Gdn_Plugin {
 //		if (!C('Plugins.Voting.Enabled'))
 //			return;
 
-      $Sender->AddCSSFile('voting.css', 'plugins/Voting');
-		$Sender->AddJSFile('plugins/Voting/voting.js');
+      $Sender->AddCSSFile('votacion.css', 'plugins/Votacion');
+		$Sender->AddJSFile('plugins/Votacion/votacion.js');
    }
    public function DiscussionsController_Render_Before($Sender) {
 		$this->AddJsCss($Sender);
@@ -586,9 +586,6 @@ class VotacionPlugin extends Gdn_Plugin {
 	 * Add voting css to post controller.
 	 */
 	public function PostController_Render_Before($Sender) {
-//		if (!C('Plugins.Voting.Enabled'))
-//			return;
-
       $this->AddJsCss($Sender);
 	}
 
@@ -602,29 +599,33 @@ class VotacionPlugin extends Gdn_Plugin {
     *Grabar la discusión como pregunta si la opción es la correcta
     */
    public function DiscussionModel_AfterSaveDiscussion_Handler($Sender) {
-      $PuntosporPregunta= 5;
       $FormPostValues = GetValue('FormPostValues', $Sender->EventArguments, array());
       $DiscussionID = GetValue('DiscussionID', $Sender->EventArguments, array());
       $Pregunta = GetValue('Pregunta', $FormPostValues , array());
       $UserID = GetValue('UpdateUserID', $FormPostValues , array());
-      if ($Pregunta =='1'){
       $SQL=Gdn::SQL();
-      $SQL->Update("Discussion")
-        ->Where('DiscussionID',$DiscussionID)
-	    ->Set('answer',1, FALSE)
-	    ->Put();
-    //quitar puntos cada vez que se haga una pregunta.
       $score=$SQL->Select('score')
                  ->From('User')
                  ->Where('UserID',$UserID)
                  ->Get()->Value('score');
-      $PuntosFinal=$score-$PuntosporPregunta;
-
+      if ($Pregunta =='1'){
+          $PuntosporPregunta= GetValue('CostodePregunta', $this->PuntosConfig, array());
+          $SQL->Update("Discussion")
+            ->Where('DiscussionID',$DiscussionID)
+            ->Set('answer',1, FALSE)
+            ->Put();
+          //quitar puntos cada vez que se haga una pregunta.
+          $PuntosFinal=$score-$PuntosporPregunta;
+      }
+      else{
+          $PuntosporPregunta= GetValue('PuntosComentNormal', $this->PuntosConfig, array());
+          //Sumar puntos si es un post normal
+          $PuntosFinal=$score+$PuntosporPregunta;
+      }
        $SQL->Update("User")
         ->Where('UserID',$UserID)
         ->Set('score',$PuntosFinal, FALSE)
-	    ->Put();
-      }
+        ->Put();
    }
 
     public function CommentModel_BeforeSaveComment_Handler($Sender) {
@@ -658,27 +659,27 @@ class VotacionPlugin extends Gdn_Plugin {
 }
 
    /**
-    *
     * Al crear un usuario a este se le dan puntos.
     */
-public function UserModel_AfterInsertUser_Handler(&$Sender) {
-
-        $UserID=&$Sender->EventArguments['InsertUserID'];
-	$SQL=Gdn::SQL();
-	$SQL->Update("User")
-	    ->Where('UserID',$UserID)
-            ->Set('Score', 10, FALSE)
-	    ->Put();
-    }
+   public function UserModel_AfterInsertUser_Handler(&$Sender) {
+       $Puntosiniciales= GetValue('Puntosiniciales', $this->PuntosConfig, array());
+       $UserID=&$Sender->EventArguments['InsertUserID'];
+       $SQL=Gdn::SQL();
+       $SQL->Update("User")
+           ->Where('UserID',$UserID)
+           ->Set('Score',$Puntosiniciales, FALSE)
+           ->Put();
+   }
    /*
        * Al habilitar a todos los usuarios se le dan puntos.
     */
    public function Setup() {
      //le damos a todos los usuarios al inicializar el plugin 10 puntos.
+      $Puntosiniciales= GetValue('Puntosiniciales', $this->PuntosConfig, array());
       $SQL=Gdn::SQL();
        $SQL->Update("User")
         ->Where('Score',NULL)
-	    ->Set('Score', 12310, FALSE)
+	    ->Set('Score', $Puntosiniciales, FALSE)
 	    ->Put();
         //Crear un campo el la tabla discusion para determinar si es una
       //pregunta (el valore es 1) de lo contrario 0
