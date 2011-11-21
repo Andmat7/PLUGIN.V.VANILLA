@@ -26,7 +26,13 @@ $PluginInfo['Votacion'] = array(
 );
 //Array de Configuración de puntos.
 $PuntosConfig=array(
-'')
+    'Puntosiniciales'=>10,//Puntos con los que inicia un usuario recien llegado.
+    'CostodePregunts'=>5,//Puntos que cuesta realizar una pregunta.
+    'PuntosporRespuesta'=>3,//Pts qu se gana por responder una pregunta.
+    'PuntosporVoto'=>1,//Puntos ganados al dar un voto positivo.
+    'PuntosPostNormal'=>1,//Puntos que se ganan al escribir un post normal.
+    'PuntosComentNormal'=>1//puntos que se ganan al escribir un comentario a un post normal.
+);
 class VotacionPlugin extends Gdn_Plugin {
 
     /**
@@ -84,7 +90,7 @@ class VotacionPlugin extends Gdn_Plugin {
    }
 
 /*
- *Crea los botones de "Estados" a la lista de Discusion
+ *Crea los botones de "Estados" a la lista de Discusion(votos,follows,etv)
  */
    public function Base_BeforeDiscussionContent_Handler($Sender) {
 //		if (!C('Plugins.Voting.Enabled'))
@@ -569,7 +575,7 @@ class VotacionPlugin extends Gdn_Plugin {
 	/**
 	 * Insert the voting html on comments in a discussion.
 	 */
-	public function PostController_BeforeCommentMeta_Handler($Sender) {
+	public function PostController_BeforeCommentMeta_Handler($Sender) {votos,follows,etv
 //		if (!C('Plugins.Voting.Enabled'))
 //			return;
 
