@@ -575,7 +575,7 @@ class VotacionPlugin extends Gdn_Plugin {
 	/**
 	 * Insert the voting html on comments in a discussion.
 	 */
-	public function PostController_BeforeCommentMeta_Handler($Sender) {votos,follows,etv
+	public function PostController_BeforeCommentMeta_Handler($Sender) {
 //		if (!C('Plugins.Voting.Enabled'))
 //			return;
 
