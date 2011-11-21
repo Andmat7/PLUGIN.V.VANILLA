@@ -24,7 +24,9 @@ $PluginInfo['Votacion'] = array(
    'AuthorEmail' => 'tim@vanillaforums.com',
    'AuthorUrl' => 'http://www.vanillaforums.com'
 );
-
+//Array de Configuración de puntos.
+$PuntosConfig=array(
+'')
 class VotacionPlugin extends Gdn_Plugin {
 
     /**
