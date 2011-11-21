@@ -255,6 +255,7 @@ class VotacionPlugin extends Gdn_Plugin {
 //		if (!C('Plugins.Voting.Enabled'))
 //			return;
       $PuntosporVoto=1;
+      $PuntosMaxComent=10;
       $CommentID = GetValue(0, $Sender->RequestArgs, 0);
       $VoteType = GetValue(1, $Sender->RequestArgs);
       $TransientKey = GetValue(2, $Sender->RequestArgs);
@@ -264,22 +265,14 @@ class VotacionPlugin extends Gdn_Plugin {
       if ($Session->IsValid() && $Session->ValidateTransientKey($TransientKey) && $CommentID > 0) {
          $CommentModel = new CommentModel();
          $OldUserVote = $CommentModel->GetUserScore($CommentID, $Session->UserID);
+         //Busca el usuario que creo la respuesta.
+         $SQL=$CommentModel->SQL;
+         $CommentUser=$SQL->Select('InsertUserID')
+                         ->From('Comment')
+                         ->Where('CommentID',$CommentID)
+                         ->Get()->Value('InsertUserID');
+
          $NewUserVote = $VoteType == 'voteup' ? 1 : -1;
-         if ($NewUserVote == 1)
-         {
-             $SQL=Gdn::SQL();
-             $PuntosAntiguos=$SQL->Select('score')
-                         ->From('User')
-                         ->Where('UserID',$UserID)
-                         ->Get()->Value('score');
-             $PuntosFinal=$score+$PuntosporVoto;
-                    $SQL->Update("User")
-                        ->Where('UserID',$UserID)
-                        ->Set('score',$PuntosFinal, FALSE)
-                	    ->Put();
-
-
-         }
          $FinalVote = intval($OldUserVote) + intval($NewUserVote);
          // Permite a los administradores aumentar los votos indefinidamente
          $AllowVote = $Session->CheckPermission('Garden.Moderation.Manage');
@@ -288,8 +281,38 @@ class VotacionPlugin extends Gdn_Plugin {
             $AllowVote = $FinalVote > -2 && $FinalVote < 2;
 
          if ($AllowVote)
-            $Total = $CommentModel->SetUserScore($CommentID, $Session->UserID, $FinalVote);
+         {
+             //si el voto es positivo entonces comprueba cuantos votos hay.
+             if ($NewUserVote == 1)
+             {
+                 $PuntosdeComentarioAntiguo=$SQL->Select('Score')
+                             ->From('CommentPuntos')
+                             ->Where('UserID',$CommentUser)
+                             ->Get()->Value('Score');
+                 if(!isset($PuntosdeComentarioAntiguo))$PuntosdeComentarioAntiguo=0;
+                 if($PuntosdeComentarioAntiguo<=$PuntosMaxComent && !$CommentUser==$Session->UserID){
+                     //Después de verificar si es menor al máximo permitido
+                     //Suma los puntos puntos a la tabla "CommentPuntos"
+                     $PtsComentfinal=$PuntosdeComentarioAntiguo+$PuntosporVoto;
+                            $SQL->Update("CommentPuntos")
+                                ->Where('UserID',$CommentUser)
+                                ->Set('score',$PtsComentfinal, FALSE)
+                                ->Put();
+                     //suma los puntos al usuario
+                     $PuntosAntiguos=$SQL->Select('score')
+                                 ->From('User')
+                                 ->Where('UserID',$CommentUser)
+                                 ->Get()->Value('score');
 
+                     $PuntosFinal=$score+$PuntosporVoto;
+                            $SQL->Update("User")
+                                ->Where('UserID',$CommentUser)
+                                ->Set('score',$PuntosFinal, FALSE)
+                                ->Put();
+                 }
+             }
+            $Total = $CommentModel->SetUserScore($CommentID, $Session->UserID, $FinalVote);
+         }
          // Move the comment into or out of moderation.
          if (class_exists('LogModel')) {
             $Moderate = FALSE;
@@ -576,7 +599,6 @@ class VotacionPlugin extends Gdn_Plugin {
       $Pregunta = GetValue('Pregunta', $FormPostValues , array());
       $UserID = GetValue('UpdateUserID', $FormPostValues , array());
       if ($Pregunta =='1'){
-      $SQL=Gdn::SQL();
       $SQL->Update("Discussion")
         ->Where('DiscussionID',$DiscussionID)
 	    ->Set('answer',1, FALSE)
