@@ -289,15 +289,16 @@ class VotacionPlugin extends Gdn_Plugin {
                              ->From('CommentPuntos')
                              ->Where('UserID',$CommentUser)
                              ->Get()->Value('Score');
+                 $UserID=$Session->UserID;
                  if(!isset($PuntosdeComentarioAntiguo))$PuntosdeComentarioAntiguo=0;
-                 if($PuntosdeComentarioAntiguo<=$PuntosMaxComent && !$CommentUser==$Session->UserID){
+                 if(($PuntosdeComentarioAntiguo <= $PuntosMaxComent) && ($CommentUser!=$Session->UserID)){
                      //Después de verificar si es menor al máximo permitido
                      //Suma los puntos puntos a la tabla "CommentPuntos"
                      $PtsComentfinal=$PuntosdeComentarioAntiguo+$PuntosporVoto;
-                            $SQL->Update("CommentPuntos")
-                                ->Where('UserID',$CommentUser)
-                                ->Set('score',$PtsComentfinal, FALSE)
-                                ->Put();
+                     $TotaL=$SQL->Replace('CommentPuntos',
+                                array('Score' => $PtsComentfinal),
+                                array('CommentID' => $CommentID, 'UserID' => $CommentUser)
+                            );
                      //suma los puntos al usuario
                      $PuntosAntiguos=$SQL->Select('score')
                                  ->From('User')
@@ -599,6 +600,7 @@ class VotacionPlugin extends Gdn_Plugin {
       $Pregunta = GetValue('Pregunta', $FormPostValues , array());
       $UserID = GetValue('UpdateUserID', $FormPostValues , array());
       if ($Pregunta =='1'){
+      $SQL=Gdn::SQL();
       $SQL->Update("Discussion")
         ->Where('DiscussionID',$DiscussionID)
 	    ->Set('answer',1, FALSE)
