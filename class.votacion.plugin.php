@@ -77,18 +77,32 @@ private $PuntosConfig=array(
    }
    public function DiscussionsController_Render_Before($Sender) {
 		$this->AddJsCss($Sender);
+      $this->AddJsmensaje($Sender);
 	}
    public function CategoriesController_Render_Before($Sender) {
       $this->AddJsCss($Sender);
    }
-
    public function DiscussionController_Render_Before($Sender) {
-//		if (!C('Plugins.Voting.Enabled'))
-//			return;
-
+      $this->AddJsmensaje($Sender);
       $this->AddJsCss($Sender);
    }
+   /*
+    *Mensaje de consto de pregunta
+    */
+   public function AddJsmensaje($Sender){
+       $PuntosporPregunta= GetValue('CostodePregunta', $this->PuntosConfig, array());
+       $Sender->Head->AddString("
+           <style type='text/css' media='screen'>
+           </style>
+           <script>
+           $(document).ready(function(){
+           $('#Form_Pregunta').click(function(){
+               if (this.checked) alert('Elija esta opcion solo si tiene una pregunta bien definida, Costo de pregunta =".$PuntosporPregunta." ');
+               else alert('checkbox desactivado')
+           });});
+           </script> ");
 
+         }
 /*
  *Crea los botones de "Estados" a la lista de Discusion(votos,follows,etv)
  */
@@ -587,7 +601,8 @@ private $PuntosConfig=array(
 	 */
 	public function PostController_Render_Before($Sender) {
       $this->AddJsCss($Sender);
-	}
+      $this->AddJsmensaje($Sender);
+   }
 
    public function ProfileController_Render_Before($Sender) {
 //		if (!C('Plugins.Voting.Enabled'))
@@ -602,6 +617,7 @@ private $PuntosConfig=array(
       $FormPostValues = GetValue('FormPostValues', $Sender->EventArguments, array());
       $DiscussionID = GetValue('DiscussionID', $Sender->EventArguments, array());
       $Pregunta = GetValue('Pregunta', $FormPostValues , array());
+      Gdn_Controller::InformMessage(sprintf(T('The s has been removed for moderation.'), T('comment')));
       $UserID = GetValue('UpdateUserID', $FormPostValues , array());
       $SQL=Gdn::SQL();
       $score=$SQL->Select('score')
