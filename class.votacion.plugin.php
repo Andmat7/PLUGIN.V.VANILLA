@@ -33,7 +33,8 @@ private $PuntosConfig=array(
     'PuntosporRespuesta'=>3,//Pts qu se gana por responder una pregunta.
     'PuntosporVoto'=>1,//Puntos ganados al dar un voto positivo.
     'PuntosPostNormal'=>1,//Puntos que se ganan al escribir un post normal.
-    'PuntosComentNormal'=>1//puntos que se ganan al escribir un comentario a un post normal.
+    'PuntosComentNormal'=>1,//puntos que se ganan al escribir un comentario a un post normal.
+    'PuntosMaxComment'=>10//puntos max permitidos por respuesta positiva
 );
     /**
 	 *Herramimienta de Administracion del plugin voting.
@@ -276,8 +277,9 @@ private $PuntosConfig=array(
    public function DiscussionController_VoteComment_Create($Sender) {
 //		if (!C('Plugins.Voting.Enabled'))
 //			return;
-      $PuntosporVoto=1;
-      $PuntosMaxComent=10;
+
+      $PuntosporVoto= GetValue('PuntosporVoto', $this->PuntosConfig, array());
+      $PuntosMaxComment= GetValue('PuntosMaxComment', $this->PuntosConfig, array());
       $CommentID = GetValue(0, $Sender->RequestArgs, 0);
       $VoteType = GetValue(1, $Sender->RequestArgs);
       $TransientKey = GetValue(2, $Sender->RequestArgs);
@@ -313,7 +315,7 @@ private $PuntosConfig=array(
                              ->Get()->Value('Score');
                  $UserID=$Session->UserID;
                  if(!isset($PuntosdeComentarioAntiguo))$PuntosdeComentarioAntiguo=0;
-                 if(($PuntosdeComentarioAntiguo <= $PuntosMaxComent) && ($CommentUser!=$Session->UserID)){
+                 if(($PuntosdeComentarioAntiguo < $PuntosMaxComment) && ($CommentUser!=$Session->UserID)){
                      //Después de verificar si es menor al máximo permitido
                      //Suma los puntos puntos a la tabla "CommentPuntos"
                      $PtsComentfinal=$PuntosdeComentarioAntiguo+$PuntosporVoto;
@@ -327,7 +329,7 @@ private $PuntosConfig=array(
                                  ->Where('UserID',$CommentUser)
                                  ->Get()->Value('score');
 
-                     $PuntosFinal=$score+$PuntosporVoto;
+                     $PuntosFinal=$PuntosAntiguos+$PuntosporVoto;
                             $SQL->Update("User")
                                 ->Where('UserID',$CommentUser)
                                 ->Set('score',$PuntosFinal, FALSE)
@@ -466,7 +468,6 @@ private $PuntosConfig=array(
    /**
     *
     * Coge el campo de puntacion cada vez que las discusiones se consultan.
-    * Grab the score field whenever the discussions are queried.
     */
    public function DiscussionModel_AfterDiscussionSummaryQuery_Handler(&$Sender) {
 //		if (!C('Plugins.Voting.Enabled'))
@@ -643,8 +644,11 @@ private $PuntosConfig=array(
         ->Set('score',$PuntosFinal, FALSE)
         ->Put();
    }
-
+    /*
+     *Al responder una pregunta +3 puntos
+    */
     public function CommentModel_BeforeSaveComment_Handler($Sender) {
+
 
       $FormPostValues = GetValue('FormPostValues', $Sender->EventArguments, array());
       $InsertUserID = GetValue('InsertUserID', $FormPostValues, array());
@@ -660,8 +664,12 @@ private $PuntosConfig=array(
                  ->Where('DiscussionID',$DiscussionID)
              ->Get()->FirstRow();
       if (!$comentariosantes){
-          if($Pregunta==1)$PuntosPorComentario=3;
-          else $PuntosPorComentario=1;
+          if($Pregunta==1){
+              $PuntosPorComentario= GetValue('PuntosporRespuesta', $this->PuntosConfig, array());
+          }
+          else{
+              $PuntosPorComentario= GetValue('PuntosPostNormal', $this->PuntosConfig, array());
+          }
           $score=$SQL->Select('score')
                      ->From('User')
                      ->Where('UserID',$InsertUserID)
