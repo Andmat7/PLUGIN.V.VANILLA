@@ -1,27 +1,27 @@
 Preguntas
-- xEl plugin Voting sólo aplicaría cuando se selecciona que un post
+- El plugin Voting sólo aplicaría cuando se selecciona que un post
  será una pregunta, que se le cobrarán 5 por realizarla.
  
--X caso en el cual saldrá un cuadrito que le indicará
+- caso en el cual saldrá un cuadrito que le indicará
  al usuario que este tipo de post puede usarlo cuando tenga una pregunta
  bien definida y 
 
--X Al registrarse un nuevo usuario deberá comenzar con 10 puntos.
+- Al registrarse un nuevo usuario deberá comenzar con 10 puntos.
 
--x Al responder una pregunta + 3 puntos (si responde varias veces en
+- Al responder una pregunta + 3 puntos (si responde varias veces en
 la misma preg. sólo obtiene los 3 puntos iniciales).
 
--x Cada vez que recibe un voto su respuesta, gana 1 punto, sin embargo
+- Cada vez que recibe un voto su respuesta, gana 1 punto, sin embargo
 no puede ganar más de 10 por pregunta, tampoco puede perder puntos por 
 responder, es decir, a diferencia de como está el plugin Voting que
 admite votos negativos, lo mínimo sería tener 0 votos.
 
 Post Normales
--X Al escribir un Post normal +1 punto, 
--x si escribe respuestas en los post normales, igual cada una le
+- Al escribir un Post normal +1 punto, 
+- si escribe respuestas en los post normales, igual cada una le
   da +1 punto (o sea como es ahora,no hay que hacer nada aquí).
 
--X Cada uno de estos numeritos debería ser parametrizable, no necesariamente
+- Cada uno de estos numeritos debería ser parametrizable, no necesariamente
 a través de una pantalla de administración del plugin, pero que al menos
 haya un array en el archivo .php donde se puedan cambiar fácilmente y no
 toque revisar las entrañas del plugin si digamos ahora queremos que cada
