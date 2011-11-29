@@ -107,6 +107,7 @@ private $PuntosConfig=array(
 /*
  *Crea los botones de "Estados" a la lista de Discusion(votos,follows,etv)
  */
+   /*
    public function Base_BeforeDiscussionContent_Handler($Sender) {
 //		if (!C('Plugins.Voting.Enabled'))
 //			return;
@@ -164,7 +165,7 @@ private $PuntosConfig=array(
 		} else {
 			echo Wrap(Wrap(T('Votes')) . $CountVotes, 'div', array('class' => 'StatBox VotesBox'));
 		}
-	}
+   }*/
 
     /**
      * Organiza los comentarios por popularidad si es necesario
@@ -239,6 +240,10 @@ private $PuntosConfig=array(
       $Sender->VoteHeaderWritten = TRUE;
 		}
 	}
+   /*
+    * Crea el código cuandoi se despliega una discusion especifcia
+    */
+
    public function DiscussionController_BeforeCommentMeta_Handler($Sender) {
 //		if (!C('Plugins.Voting.Enabled'))
 //			return;
@@ -296,6 +301,10 @@ private $PuntosConfig=array(
                          ->Where('CommentID',$CommentID)
                          ->Get()->Value('InsertUserID');
 
+         $Votos=$SQL->Select('Score')
+                         ->From('Comment')
+                         ->Where('CommentID',$CommentID)
+                         ->Get()->Value('Score');
          $NewUserVote = $VoteType == 'voteup' ? 1 : -1;
          $FinalVote = intval($OldUserVote) + intval($NewUserVote);
          // Permite a los administradores aumentar los votos indefinidamente
@@ -304,7 +313,7 @@ private $PuntosConfig=array(
          if (!$AllowVote)
             $AllowVote = $FinalVote > -2 && $FinalVote < 2;
 
-         if ($AllowVote)
+         if ($AllowVote && $FinalVote!=-1)
          {
              //si el voto es positivo entonces comprueba cuantos votos hay.
              if ($NewUserVote == 1)
@@ -411,7 +420,7 @@ private $PuntosConfig=array(
          // Allow admins to vote unlimited.
          $AllowVote = $Session->CheckPermission('Garden.Moderation.Manage');
          // Only allow users to vote up or down by 1.
-         if (!$AllowVote)
+         if (!$AllowVote&&$FinalVote!=-1)
             $AllowVote = $FinalVote > -2 && $FinalVote < 2;
 
          if ($AllowVote) {
@@ -618,7 +627,6 @@ private $PuntosConfig=array(
       $FormPostValues = GetValue('FormPostValues', $Sender->EventArguments, array());
       $DiscussionID = GetValue('DiscussionID', $Sender->EventArguments, array());
       $Pregunta = GetValue('Pregunta', $FormPostValues , array());
-      Gdn_Controller::InformMessage(sprintf(T('The s has been removed for moderation.'), T('comment')));
       $UserID = GetValue('UpdateUserID', $FormPostValues , array());
       $SQL=Gdn::SQL();
       $score=$SQL->Select('score')
